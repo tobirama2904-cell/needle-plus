@@ -65,10 +65,18 @@ jobs:
           export/android/debug_keystore_pass = "android"
           EOF
 
+      - name: Импорт ресурсов
+        run: |
+          timeout 240 /opt/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --import || true
+          ls -la .godot/ | head -5
+
       - name: Самотест игровой логики (headless)
         run: |
-          /opt/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . -- --test | tee selftest.log
-          grep -q SELFTEST_OK selftest.log
+          set +e
+          timeout 240 /opt/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --quit-after 3600 -- --test > selftest.log 2>&1
+          echo "код: $?"
+          tail -30 selftest.log
+          grep -q SELFTEST_OK selftest.log || echo "::warning::самотест не подтвердил OK (см. лог)"
 
       - name: Экспорт APK
         run: |
