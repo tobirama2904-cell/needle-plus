@@ -14,6 +14,9 @@ var stamina := 100.0
 var tired_until := 0.0
 var last_dig := 0.0
 var bob := 0.0
+var swing := 0.0
+var swing_dir := 1.0
+var carry_lift := 0.0
 var carried_visual: Node3D
 var move_input := Vector2.ZERO      # от виртуального стика
 var look_input := Vector2.ZERO      # от тача/мыши за кадр
@@ -314,6 +317,8 @@ func _do_dig() -> void:
 	if got > 0:
 		var put := Game.add_carried(got)
 		_rebuild_carried()
+		swing = 1.0                      # взмах инструментом
+		carry_lift = 0.14
 		stamina = max(0.0, stamina - Game.tool_data().stamina)
 		last_dig = Time.get_ticks_msec() / 1000.0
 		Sfx.play3d("dig", hit.position, -8, randf_range(0.94, 1.06))
@@ -404,7 +409,20 @@ func _place_machine() -> void:
 	else:
 		Game.toast.emit("Здесь нельзя поставить")
 
-func _process(_d: float) -> void:
+func _process(d: float) -> void:
+	# анимация: взмах, покачивание при ходьбе, дёрганье инструмента при беге
+	if held_root:
+		if swing > 0.0:
+			swing = maxf(0.0, swing - d * 4.2)
+			var k: float = sin((1.0 - swing) * PI)
+			held_root.rotation.x = -k * 0.75
+			held_root.position.y = -k * 0.12
+		else:
+			held_root.rotation.x = lerp(held_root.rotation.x, 0.0, d * 8.0)
+			var bobf: float = sin(bob * 2.0) * 0.012 * clampf(Vector2(velocity.x, velocity.z).length() / 4.0, 0.0, 1.5)
+			held_root.position.y = bobf + carry_lift
+			held_root.position.x = cos(bob) * 0.010
+		carry_lift = lerp(carry_lift, 0.0, d * 5.0)
 	if ghost and ghost.visible:
 		var from := cam.global_position
 		var to := from + (-cam.global_transform.basis.z) * 6.0

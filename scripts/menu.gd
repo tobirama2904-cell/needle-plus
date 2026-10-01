@@ -154,7 +154,8 @@ func _fill_shop() -> void:
 			"sellstand": desc = "Лента продаёт сено автоматически"
 			"drone": desc = "Летает и копает сено сам"
 			"scanner": desc = "Подсвечивает спрятанные иголки"
-		_row(Machines.NAMES[m], desc, Machines.price(m), unl and Game.money >= Machines.price(m),
+		_row(Machines.NAMES[m], desc + "  ·  после покупки прицелься и нажми «ВЗЯТЬ»", Machines.price(m),
+			unl and Game.money >= Machines.price(m),
 			func():
 				player.start_placing(m)
 				toggle(false),
